@@ -1,6 +1,6 @@
 -- =================================================================
 --    NOVA HUB - ULTRA COMPREHENSIVE FULL UNIFIED MATRIX v13 (2026)
---    [OFFICIAL REPOSITORY: ky4nz/nova-hub - FULL UNTRUNCATED]
+--    [REBUILT & STANDARDIZED .LUA MASTER VERSION]
 -- =================================================================
 
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
@@ -551,7 +551,6 @@ local SubEngine = TabSettings:AddSection({Name = "Engine Speed & System Customiz
 TabSettings:AddSlider({Name = "Flight Engine Speed", Min = 100, Max = 400, Default = 250, Color = Color3.fromRGB(255,255,255), Increment = 10, ValueName = "Speed", Callback = function(v) _G.FlySpeed = v end})
 TabSettings:AddToggle({Name = "Auto Hop Server If Admin Joins", Default = true, Callback = function(v) _G.HopIfAdminJoin = v end})
 
-local TabRace = Window:MakeTab({Name = "Auto Race Settings", Icon = "rbxassetid://4483345998", PremiumOnly = false})
 TabRace:AddToggle({Name = "Enable Automatic Race V3 Skill", Default = true, Callback = function(v) _G.AutoRaceV3 = v end})
 TabRace:AddToggle({Name = "Enable Automatic Race V4 Awakening", Default = true, Callback = function(v) _G.AutoRaceV4 = v end})
 
