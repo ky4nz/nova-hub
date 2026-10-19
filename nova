@@ -1,0 +1,575 @@
+-- =================================================================
+--    NOVA HUB - ULTRA COMPREHENSIVE FULL UNIFIED MATRIX v13 (2026)
+--    [FIXED & OPTIMIZED SINGLE MATRIX VERSION]
+-- =================================================================
+
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "Nova Hub | Ultra Ultimate Full Matrix v13", HidePremium = false, SaveConfig = true, ConfigFolder = "NovaMegaV13Full"})
+
+_G.AutoFactionJoin     = "Pirates" 
+_G.AutoFarmLevel       = false
+_G.AutoFarmMaterial    = false
+_G.AutoFarmEliteHunter = false
+_G.AutoRaid            = false 
+_G.SeaEventFarm        = false
+_G.AutoSeaBeast        = false
+_G.FastAttack          = true
+_G.HopIfAdminJoin      = true
+_G.SelectedStatTarget  = "Melee"
+
+_G.AutoKenHaki         = true   
+_G.AutoAuraHaki        = true   
+_G.EnableSafeZone      = true   
+
+_G.WalkOnWater         = false 
+_G.NoClip              = false 
+_G.InfiniteJump        = false 
+_G.FruitSniper         = false 
+_G.AutoChest           = false 
+_G.AntiTradeScam       = false 
+_G.AutoGachaFruit      = false 
+_G.AutoBuyItems        = false 
+_G.AutoCheckStocks     = false 
+_G.AutoStats           = false 
+_G.EspPlayers          = false
+_G.EspFruits           = false
+
+_G.FlySpeed            = 250
+_G.FarmAttackDelay     = 0.07 
+_G.BringMobsRadius     = 300  
+_G.FarmAboveHeight     = 8    
+
+_G.AutoPrehistoricIsld = false 
+_G.AutoDojoQuest       = false 
+_G.TeleportIsland      = "Starter Island"
+
+_G.AutoBountyHunt      = false
+_G.AutoRaceV3          = true   
+_G.AutoRaceV4          = true   
+_G.SkillSettings = {
+    Melee_Z = true, Melee_X = true, Melee_C = true, Melee_V = false,
+    Sword_Z = true, Sword_X = true, Sword_C = false, Sword_V = false,
+    Gun_Z   = true, Gun_X = true, Gun_C = false, Gun_V = false,
+    Fruit_Z = true, Fruit_X = true, Fruit_C = true, Fruit_V = true
+}
+_G.BountyConfig = {
+    MinLevelTarget      = 450, MaxLevelDiff = 250, MaxKillTime = 120,
+    SkipTigerWerewolf   = true, SkipDragon = true, SkipKitsune = true, SkipRaceV4Target = true,
+    SafeZoneHealth      = 3500, TeleportEscapeY = 1500, SkillHoldDelay = 0.4, AutoUseV3Health = 5000    
+}
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local LocalPlayer = Players.LocalPlayer
+local VirtualUser = game:GetService("VirtualUser")
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local vim = game:GetService("VirtualInputManager")
+
+local IslandDatabase = {
+    ["Starter Island"] = CFrame.new(1059, 15, 1548),
+    ["Mansion"] = CFrame.new(-12471, 332, -7551),
+    ["Cafe"] = CFrame.new(-385, 73, 255),
+    ["Hydra Island"] = CFrame.new(5752, 610, -253)
+}
+
+function checkAndEnableKenHaki()
+    if _G.AutoKenHaki then
+        pcall(function()
+            if not LocalPlayer.PlayerGui.Main:FindFirstChild("KenHakiActive") or LocalPlayer.PlayerGui.Main.KenHakiActive.Value == false then
+                vim:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                task.wait(0.05)
+                vim:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+            end
+        end)
+    end
+end
+
+function checkAndEnableAuraHaki()
+    if _G.AutoAuraHaki then
+        pcall(function()
+            if LocalPlayer.Character and not LocalPlayer.Character:FindFirstChild("HasBuso") then
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("Buso")
+            end
+        end)
+    end
+end
+
+function serverHop()
+    pcall(function()
+        local Servers = HttpService:JSONDecode(game:HttpGet("https://roblox.com"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+        for _, s in pairs(Servers.data) do
+            if s.playing < s.maxPlayers and s.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, LocalPlayer)
+                break
+            end
+        end
+    end)
+end
+
+Players.PlayerAdded:Connect(function(p)
+    if _G.HopIfAdminJoin and p:GetRankInGroup(1200769) > 0 then serverHop() end
+end)
+
+function secureTween(targetCFrame)
+    local character = LocalPlayer.Character
+    if not character then return end
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    local humanoid = character:FindFirstChild("Humanoid")
+    if not hrp or not humanoid or humanoid.Health <= 0 then return end
+    
+    local distance = (hrp.Position - targetCFrame.p).magnitude
+    local speed = _G.FlySpeed or 250
+    if speed <= 0 then speed = 250 end
+    
+    local tweenInfo = TweenInfo.new(distance / speed, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = targetCFrame})
+    
+    if _G.NoClip or _G.AutoFarmLevel or _G.AutoBountyHunt or _G.AutoPrehistoricIsld then
+        pcall(function() humanoid:ChangeState(11) end)
+    end
+    
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+function equipWeapon(weaponClass)
+    local character = LocalPlayer.Character
+    if character then
+        for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+            if tool:IsA("Tool") and (tool.ToolTip == weaponClass or (weaponClass == "Blox Fruit" and tool.ToolTip == "Blox Fruit")) then
+                character.Humanoid:EquipTool(tool) return tool
+            end
+        end
+        for _, tool in pairs(character:GetChildren()) do
+            if tool:IsA("Tool") and (tool.ToolTip == weaponClass or (weaponClass == "Blox Fruit" and tool.ToolTip == "Blox Fruit")) then return tool end
+        end
+    end
+    return nil
+end
+
+local QuestDatabase = {
+    [0] = {QuestName = "BanditQuest1", NPCName = "Bandit", LevelReq = 0, CFramePos = CFrame.new(1059, 15, 1548)},
+    [10] = {QuestName = "MonkeyQuest1", NPCName = "Monkey", LevelReq = 10, CFramePos = CFrame.new(-1598, 37, 158)}
+}
+
+function getMyQuestData()
+    local myLevel = LocalPlayer.Data.Level.Value
+    local bestQuest = QuestDatabase[0]
+    for lvl, data in pairs(QuestDatabase) do
+        if myLevel >= lvl and lvl > bestQuest.LevelReq then bestQuest = data end
+    end
+    return bestQuest
+end
+
+spawn(function()
+    while task.wait(0.1) do
+        if _G.AutoFarmLevel then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                checkAndEnableKenHaki()
+                local data = getMyQuestData()
+                if not LocalPlayer.PlayerGui.Main:FindFirstChild("Quest") or LocalPlayer.PlayerGui.Main.Quest.Visible == false then
+                    secureTween(data.CFramePos)
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("StartQuest", data.QuestName, 1)
+                else
+                    local enemy = workspace.Enemies:FindFirstChild(data.NPCName)
+                    if enemy and enemy:FindFirstChild("HumanoidRootPart") and enemy.Humanoid.Health > 0 then
+                        if _G.EnableSafeZone and LocalPlayer.Character.Humanoid.Health < _G.BountyConfig.SafeZoneHealth then
+                            secureTween(CFrame.new(LocalPlayer.Character.HumanoidRootPart.Position.X, _G.BountyConfig.TeleportEscapeY, LocalPlayer.Character.HumanoidRootPart.Position.Z))
+                            task.wait(4) return
+                        end
+                        for _, e in pairs(workspace.Enemies:GetChildren()) do
+                            if e.Name == data.NPCName and e:FindFirstChild("HumanoidRootPart") then
+                                if (e.HumanoidRootPart.Position - enemy.HumanoidRootPart.Position).magnitude <= _G.BringMobsRadius then
+                                    e.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame
+                                    e.HumanoidRootPart.CanCollide = false
+                                end
+                            end
+                        end
+                        secureTween(enemy.HumanoidRootPart.CFrame * CFrame.new(0, _G.FarmAboveHeight, 0))
+                        equipWeapon("Melee")
+                        if _G.FastAttack then VirtualUser:CaptureController() VirtualUser:ClickButton1(Vector2.new(851, 529)) task.wait(_G.FarmAttackDelay) end
+                    else secureTween(data.CFramePos * CFrame.new(0, 20, 0)) end
+                end
+            end)
+        elseif _G.AutoFarmMaterial then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                local mEnemy = workspace.Enemies:FindFirstChildOfClass("Model")
+                if mEnemy and mEnemy:FindFirstChild("HumanoidRootPart") and mEnemy.Humanoid.Health > 0 then
+                    if _G.EnableSafeZone and LocalPlayer.Character.Humanoid.Health < _G.BountyConfig.SafeZoneHealth then
+                        secureTween(CFrame.new(LocalPlayer.Character.HumanoidRootPart.Position.X, _G.BountyConfig.TeleportEscapeY, LocalPlayer.Character.HumanoidRootPart.Position.Z))
+                        task.wait(4) return
+                    end
+                    secureTween(mEnemy.HumanoidRootPart.CFrame * CFrame.new(0, _G.FarmAboveHeight, 0))
+                    equipWeapon("Melee") VirtualUser:ClickButton1(Vector2.new(851, 529))
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while task.wait(0.2) do
+        if _G.AutoFarmEliteHunter then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                checkAndEnableKenHaki()
+                local eliteName = ReplicatedStorage.Remotes.CommF_:InvokeServer("EliteHunter", "Progress")
+                if eliteName ~= "Check back later for more work." then
+                    local eliteNPC = workspace.Enemies:FindFirstChild(eliteName)
+                    if eliteNPC and eliteNPC:FindFirstChild("HumanoidRootPart") then
+                        if _G.EnableSafeZone and LocalPlayer.Character.Humanoid.Health < _G.BountyConfig.SafeZoneHealth then
+                            secureTween(CFrame.new(LocalPlayer.Character.HumanoidRootPart.Position.X, _G.BountyConfig.TeleportEscapeY, LocalPlayer.Character.HumanoidRootPart.Position.Z))
+                            task.wait(4) return
+                        end
+                        secureTween(eliteNPC.HumanoidRootPart.CFrame * CFrame.new(0, _G.FarmAboveHeight, 0))
+                        equipWeapon("Melee") VirtualUser:ClickButton1(Vector2.new(851, 529))
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while task.wait(0.2) do
+        if _G.AutoRaid then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                checkAndEnableKenHaki()
+                local chip = LocalPlayer.Backpack:FindFirstChild("Special Chip") or LocalPlayer.Character:FindFirstChild("Special Chip")
+                if chip then secureTween(CFrame.new(-21, 15, -12)) end
+                local r = workspace.Enemies:FindFirstChildOfClass("Model")
+                if r and r:FindFirstChild("HumanoidRootPart") then
+                    if _G.EnableSafeZone and LocalPlayer.Character.Humanoid.Health < _G.BountyConfig.SafeZoneHealth then
+                        secureTween(CFrame.new(LocalPlayer.Character.HumanoidRootPart.Position.X, _G.BountyConfig.TeleportEscapeY, LocalPlayer.Character.HumanoidRootPart.Position.Z))
+                        task.wait(4) return
+                    end
+                    secureTween(r.HumanoidRootPart.CFrame * CFrame.new(0, _G.FarmAboveHeight, 0))
+                    equipWeapon("Melee") VirtualUser:ClickButton1(Vector2.new(851, 529))
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while task.wait(0.3) do
+        if _G.SeaEventFarm or _G.AutoSeaBeast then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                for _, seaMob in pairs(workspace:GetChildren()) do
+                    if seaMob.Name == "Sea Beast" or string.find(seaMob.Name, "Ship") then
+                        if seaMob:FindFirstChild("HumanoidRootPart") then
+                            secureTween(seaMob.HumanoidRootPart.CFrame * CFrame.new(0, 25, 0))
+                            equipWeapon("Melee") VirtualUser:ClickButton1(Vector2.new(851, 529))
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function()
+    while task.wait(0.2) do
+        if _G.AutoPrehistoricIsld then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                local prehistoricZone = workspace:FindFirstChild("Prehistoric Island") or workspace.SeaEvents:FindFirstChild("Prehistoric Island")
+                if prehistoricZone then
+                    local boneFossil = prehistoricZone:FindFirstChild("Bone Fossil") or prehistoricZone:FindFirstChild("Volcano")
+                    if boneFossil then
+                        secureTween(boneFossil.CFrame * CFrame.new(0, _G.FarmAboveHeight, 0))
+                        local golem = workspace.Enemies:FindFirstChild("Lava Golem")
+                        if golem and golem:FindFirstChild("HumanoidRootPart") then
+                            secureTween(golem.HumanoidRootPart.CFrame * CFrame.new(0, 6, 0))
+                            equipWeapon("Melee") VirtualUser:ClickButton1(Vector2.new(851, 529))
+                        end
+                    end
+                end
+            end)
+        elseif _G.AutoDojoQuest then
+            pcall(function()
+                checkAndEnableAuraHaki()
+                local dojoNPC = workspace:FindFirstChild("Dojo Trainer") or workspace:FindFirstChild("Dragon Tamer")
+                if dojoNPC and dojoNPC:FindFirstChild("HumanoidRootPart") then
+                    secureTween(dojoNPC.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3))
+                    ReplicatedStorage.Remotes.CommF_:InvokeServer("DojoTrainerQuest", "Accept")
+                    local hydraEnemy = workspace.Enemies:FindFirstChild("Dragon Dojo Guard")
+                    if hydraEnemy and hydraEnemy:FindFirstChild("HumanoidRootPart") then
+                        secureTween(hydraEnemy.HumanoidRootPart.CFrame * CFrame.new(0, _G.FarmAboveHeight, 0))
+                        equipWeapon("Melee") VirtualUser:ClickButton1(Vector2.new(851, 529))
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+spawn(function() 
+    while task.wait(0.5) do 
+        if _G.FruitSniper then 
+            pcall(function()
+                for _,f in pairs(workspace:GetChildren()) do 
+                    if f:IsA("Tool") and string.find(f.Name,"Fruit") then 
+                        if f:FindFirstChild("Handle") then
+                            secureTween(f.Handle.CFrame) 
+                            task.wait(0.5) 
+                            ReplicatedStorage.Remotes.CommF_:InvokeServer("StoreFruit",f.Name,f) 
+                        end
+                    end 
+                end 
+            end)
+        elseif _G.AutoChest then 
+            pcall(function()
+                for _,c in pairs(workspace:GetChildren()) do 
+                    if string.find(c.Name,"Chest") and c:FindFirstChild("TouchInterest") then 
+                        secureTween(c.CFrame) 
+                        task.wait(0.2) 
+                    end 
+                end 
+            end)
+        end 
+    end 
+end)
+
+game:GetService("RunService").Stepped:Connect(function() 
+    if _G.WalkOnWater and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then 
+        if LocalPlayer.Character.HumanoidRootPart.Position.Y < 20 then 
+            LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(LocalPlayer.Character.HumanoidRootPart.Velocity.X, 0, LocalPlayer.Character.HumanoidRootPart.Velocity.Z) 
+        end 
+    end 
+    if _G.NoClip and LocalPlayer.Character then 
+        for _,p in pairs(LocalPlayer.Character:GetChildren()) do 
+            if p:IsA("BasePart") then p.CanCollide = false end 
+        end 
+    end 
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function() 
+    if _G.InfiniteJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then 
+        LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
+    end 
+end)
+
+spawn(function() 
+    while task.wait(5) do 
+        if _G.AutoGachaFruit then 
+            pcall(function() ReplicatedStorage.Remotes.CommF_:InvokeServer("Cousin","BuyFruit") end) 
+        end 
+        if _G.AutoCheckStocks then 
+            pcall(function() 
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("GetFruits") 
+                ReplicatedStorage.Remotes.CommF_:InvokeServer("GetMirageFruits") 
+            end) 
+        end 
+    end 
+end)
+
+spawn(function() 
+    while task.wait(1) do 
+        if _G.AutoStats then 
+            pcall(function()
+                local data = LocalPlayer:FindFirstChild("Data")
+                if data and data:FindFirstChild("Points") then
+                    local p = data.Points.Value 
+                    if p > 0 then 
+                        ReplicatedStorage.Remotes.CommF_:InvokeServer("AddPoint", _G.SelectedStatTarget, p) 
+                    end 
+                end
+            end)
+        end 
+    end 
+end)
+
+if ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("Trading") then 
+    ReplicatedStorage.Remotes.Trading.OnClientEvent:Connect(function(act) 
+        if _G.AntiTradeScam and act == "FruitChanged" then 
+            ReplicatedStorage.Remotes.CommF_:InvokeServer("DeclineTrade") 
+        end 
+    end) 
+end
+
+function checkTargetValidity(targetPlayer)
+    if not targetPlayer or not targetPlayer:FindFirstChild("Data") or not LocalPlayer:FindFirstChild("Data") then return false end
+    local myLvl = LocalPlayer.Data.Level.Value 
+    local targetLvl = targetPlayer.Data.Level.Value 
+    local char = targetPlayer.Character
+    if targetLvl < _G.BountyConfig.MinLevelTarget then return false end
+    if math.abs(myLvl - targetLvl) > _G.BountyConfig.MaxLevelDiff then return false end
+    if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then return false end
+    if char:FindFirstChild("SafeZoneFFA") then return false end
+    if _G.BountyConfig.SkipRaceV4Target and char:FindFirstChild("RaceV4Transformation") then return false end
+    local tool = targetPlayer.Backpack:FindFirstChildOfClass("Tool") or char:FindFirstChildOfClass("Tool")
+    if tool then
+        local wName = string.lower(tool.Name)
+        if _G.BountyConfig.SkipTigerWerewolf and (string.find(wName, "rex") or string.find(wName, "tiger") or string.find(wName, "werewolf")) then return false end
+        if _G.BountyConfig.SkipDragon and string.find(wName, "dragon") then return false end
+        if _G.BountyConfig.SkipKitsune and string.find(wName, "kitsune") then return false end
+    end
+    return true
+end
+
+function getBestBountyTarget()
+    local nearest = nil 
+    local shortestDist = math.huge
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and checkTargetValidity(p) then
+            local myChar = LocalPlayer.Character
+            local targetChar = p.Character
+            if myChar and targetChar and myChar:FindFirstChild("HumanoidRootPart") and targetChar:FindFirstChild("HumanoidRootPart") then
+                local dist = (myChar.HumanoidRootPart.Position - targetChar.HumanoidRootPart.Position).magnitude
+                if dist < shortestDist then 
+                    shortestDist = dist 
+                    nearest = p 
+                end
+            end
+        end
+    end
+    return nearest
+end
+
+function fireDynamicBountyCombo()
+    local categories = {"Melee", "Sword", "Gun", "Blox Fruit"}
+    local skillKeys = {Z = Enum.KeyCode.Z, X = Enum.KeyCode.X, C = Enum.KeyCode.C, V = Enum.KeyCode.V}
+    for _, cat in ipairs(categories) do
+        if not _G.AutoBountyHunt then break end
+        local toolActive = equipWeapon(cat)
+        if toolActive then
+            pcall(function() toolActive:Activate() end)
+            task.wait(0.05)
+            for keyName, keyCode in pairs(skillKeys) do
+                local configKey = cat.."_"..keyName
+                if _G.SkillSettings[configKey] == true then
+                    vim:SendKeyEvent(true, keyCode, false, game) 
+                    task.wait(_G.BountyConfig.SkillHoldDelay)
+                    vim:SendKeyEvent(false, keyCode, false, game) 
+                    task.wait(0.08)
+                end
+            end
+        end
+    end
+end
+
+spawn(function()
+    local targetStartTime = 0 
+    local lastTarget = nil
+    while task.wait(0.1) do
+        if _G.AutoRaceV4 and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            pcall(function() 
+                if LocalPlayer.PlayerGui.Main.AwakeningBar.Visible == true then 
+                    vim:SendKeyEvent(true, Enum.KeyCode.Y, false, game) 
+                end 
+            end)
+        end
+        if _G.AutoBountyHunt then
+            pcall(function()
+                local myChar = LocalPlayer.Character
+                if myChar and myChar:FindFirstChild("Humanoid") and myChar:FindFirstChild("HumanoidRootPart") then
+                    checkAndEnableAuraHaki()
+                    checkAndEnableKenHaki()
+                    if _G.AutoRaceV3 and myChar.Humanoid.Health <= _G.BountyConfig.AutoUseV3Health then 
+                        vim:SendKeyEvent(true, Enum.KeyCode.T, false, game) 
+                    end
+                    if _G.EnableSafeZone and myChar.Humanoid.Health < _G.BountyConfig.SafeZoneHealth then
+                        secureTween(CFrame.new(myChar.HumanoidRootPart.Position.X, _G.BountyConfig.TeleportEscapeY, myChar.HumanoidRootPart.Position.Z)) 
+                        task.wait(5)
+                    else
+                        local target = getBestBountyTarget()
+                        if target then
+                            if target ~= lastTarget then 
+                                targetStartTime = tick() 
+                                lastTarget = target 
+                            end
+                            if tick() - targetStartTime > _G.BountyConfig.MaxKillTime then 
+                                lastTarget = nil 
+                                task.wait(1) 
+                                return 
+                            end
+                            if target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                                secureTween(target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 2, 3))
+                                fireDynamicBountyCombo()
+                            end
+                        else 
+                            serverHop() 
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+local TabMain = Window:MakeTab({Name = "Nova Grinding Hub", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+TabMain:AddDropdown({Name = "Faksi Otomatis Join", Default = "Pirates", Options = {"Pirates", "Marines"}, Callback = function(v) _G.AutoFactionJoin = v end})
+TabMain:AddToggle({Name = "Auto Farm Level + Quest", Default = false, Callback = function(v) _G.AutoFarmLevel = v end})
+TabMain:AddToggle({Name = "Auto Farm Materials", Default = false, Callback = function(v) _G.AutoFarmMaterial = v end})
+TabMain:AddToggle({Name = "Auto Elite Hunter Boss", Default = false, Callback = function(v) _G.AutoFarmEliteHunter = v end})
+TabMain:AddToggle({Name = "Auto Complete Dungeons Raid", Default = false, Callback = function(v) _G.AutoRaid = v end})
+TabMain:AddToggle({Name = "Auto Prehistoric Island (Volcano)", Default = false, Callback = function(v) _G.AutoPrehistoricIsld = v end})
+TabMain:AddToggle({Name = "Auto Hydra Dojo Trainer Quest", Default = false, Callback = function(v) _G.AutoDojoQuest = v end})
+TabMain:AddToggle({Name = "Auto Sea Event & Sea Beast", Default = false, Callback = function(v) _G.SeaEventFarm = v end})
+
+local TabTeleport = Window:MakeTab({Name = "Island Teleport", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+TabTeleport:AddDropdown({Name = "Pilih Pulau Tujuan", Default = "Starter Island", Options = {"Starter Island", "Mansion", "Cafe", "Hydra Island"}, Callback = function(v) _G.TeleportIsland = v end})
+TabTeleport:AddButton({Name = "Eksekusi Teleport Pulau", Callback = function() 
+    local targetPos = IslandDatabase[_G.TeleportIsland]
+    if targetPos then
+        secureTween(targetPos)
+        OrionLib:MakeNotification({Name="Teleport", Content="Berhasil Teleport ke "._G.TeleportIsland, Time=2})
+    else
+        OrionLib:MakeNotification({Name="Teleport", Content="Pulau tidak ditemukan!", Time=2})
+    end
+end})
+
+local TabSettings = Window:MakeTab({Name = "Nova General Settings", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+local SubProtection = TabSettings:AddSection({Name = "Sistem Proteksi Pasif (v13 Update)"})
+TabSettings:AddToggle({Name = "Auto Aktifkan Ken Haki (Instinct)", Default = true, Callback = function(v) _G.AutoKenHaki = v end})
+TabSettings:AddToggle({Name = "Auto Aktifkan Aura Haki (Armament)", Default = true, Callback = function(v) _G.AutoAuraHaki = v end})
+TabSettings:AddToggle({Name = "Aktifkan Auto Safe Zone Escape (Batas HP)", Default = true, Callback = function(v) _G.EnableSafeZone = v end})
+
+local SubPhysic = TabSettings:AddSection({Name = "Bypass Fisika & Utilitas Karakter"})
+TabSettings:AddToggle({Name = "Noclip (Tembus Dinding Objek)", Default = false, Callback = function(v) _G.NoClip = v end})
+TabSettings:AddToggle({Name = "Jesus Mode (Walk on Water Bypass)", Default = false, Callback = function(v) _G.WalkOnWater = v end})
+TabSettings:AddToggle({Name = "Lompat Tanpa Batas (Infinite Jump)", Default = false, Callback = function(v) _G.InfiniteJump = v end})
+
+local SubEco = TabSettings:AddSection({Name = "Otomatisasi Ekonomi & Koleksi Buah"})
+TabSettings:AddToggle({Name = "Fruit Sniper (Auto Ambil Buah)", Default = false, Callback = function(v) _G.FruitSniper = v end})
+TabSettings:AddToggle({Name = "Auto Roll/Gacha Fruit (NPC Cousin)", Default = false, Callback = function(v) _G.AutoGachaFruit = v end})
+TabSettings:AddToggle({Name = "Auto Farm Peti Uang (Chest Beli)", Default = false, Callback = function(v) _G.AutoChest = v end})
+TabSettings:AddToggle({Name = "Auto Monitor Normal & Mirage Stock", Default = false, Callback = function(v) _G.AutoCheckStocks = v end})
+TabSettings:AddToggle({Name = "Anti-Scam Freeze Trade Monitor", Default = false, Callback = function(v) _G.AntiTradeScam = v end})
+
+local SubKaitun = TabSettings:AddSection({Name = "Kaitun Auto Stats Allocation"})
+TabSettings:AddDropdown({Name = "Fokus Upgrade Stat", Default = "Melee", Options = {"Melee", "Defense", "Sword", "Blox Fruit"}, Callback = function(v) _G.SelectedStatTarget = v end})
+TabSettings:AddToggle({Name = "Aktifkan Auto Stat Allocation", Default = false, Callback = function(v) _G.AutoStats = v end})
+local SubEngine = TabSettings:AddSection({Name = "Kustomisasi Kecepatan & Sistem"})
+TabSettings:AddSlider({Name = "Kecepatan Terbang Engine", Min = 100, Max = 400, Default = 250, Color = Color3.fromRGB(255,255,255), Increment = 10, ValueName = "Speed", Callback = function(v) _G.FlySpeed = v end})
+TabSettings:AddToggle({Name = "Auto Hop Server Jika Admin Join", Default = true, Callback = function(v) _G.HopIfAdminJoin = v end})
+
+local TabRace = Window:MakeTab({Name = "Auto Race Settings", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+TabRace:AddToggle({Name = "Aktifkan Otomatis Skill Race V3", Default = true, Callback = function(v) _G.AutoRaceV3 = v end})
+TabRace:AddToggle({Name = "Aktifkan Otomatis Awakening Race V4", Default = true, Callback = function(v) _G.AutoRaceV4 = v end})
+
+local TabCombat = Window:MakeTab({Name = "Advanced PvP & Bounty", Icon = "rbxassetid://4483345998", PremiumOnly = false})
+TabCombat:AddToggle({Name = "Mulai Auto Bounty Hunt (Safe Smart)", Default = false, Callback = function(v) _G.AutoBountyHunt = v end})
+local SectionMeleeSkill = TabCombat:AddSection({Name = "Pengaturan Kombo Skil Melee"})
+TabCombat:AddToggle({Name = "Gunakan Skill Melee Z", Default = true, Callback = function(v) _G.SkillSettings.Melee_Z = v end})
+TabCombat:AddToggle({Name = "Gunakan Skill Melee X", Default = true, Callback = function(v) _G.SkillSettings.Melee_X = v end})
+TabCombat:AddToggle({Name = "Gunakan Skill Melee C", Default = true, Callback = function(v) _G.SkillSettings.Melee_C = v end})
+local SectionFruitSkill = TabCombat:AddSection({Name = "Pengaturan Kombo Skil Blox Fruit"})
+TabCombat:AddToggle({Name = "Gunakan Skill Fruit Z", Default = true, Callback = function(v) _G.SkillSettings.Fruit_Z = v end})
+TabCombat:AddToggle({Name = "Gunakan Skill Fruit X", Default = true, Callback = function(v) _G.SkillSettings.Fruit_X = v end})
+TabCombat:AddToggle({Name = "Gunakan Skill Fruit C", Default = true, Callback = function(v) _G.SkillSettings.Fruit_C = v end})
+TabCombat:AddToggle({Name = "Gunakan Skill Fruit V", Default = true, Callback = function(v) _G.SkillSettings.Fruit_V = v end})
+local SectionAntiSuspicious = TabCombat:AddSection({Name = "Sistem Validasi Server (Anti Bounty Reset)"})
+TabCombat:AddSlider({Name = "Jeda Tahan Cast Skill (Anti-Cheat)", Min = 0.1, Max = 1.5, Default = 0.4, Color = Color3.fromRGB(255,255,255), Increment = 0.1, ValueName = "Sec", Callback = function(v) _G.BountyConfig.SkillHoldDelay = v end})
+TabCombat:AddToggle({Name = "Skip User Werewolf / Tiger (T-Rex)", Default = true, Callback = function(v) _G.BountyConfig.SkipTigerWerewolf = v end})
+TabCombat:AddToggle({Name = "Skip User Dragon", Default = true, Callback = function(v) _G.BountyConfig.SkipDragon = v end})
+TabCombat:AddToggle({Name = "Skip User Kitsune", Default = true, Callback = function(v) _G.BountyConfig.SkipKitsune = v end})
+
+OrionLib:Init()
